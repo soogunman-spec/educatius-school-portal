@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html{color-scheme:dark}body{margin:0}</style>
+<title>Educatius School Portal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Jost:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky wordmark header, 4-up card grid on home, Apple-style bento grid on detail. */
+:root {
+  --bg: #1b1c1e;
+  --surface: #25272a;
+  --surface-2: #2d3033;
+  --line: #3a3d41;
+  --fg: #efeeea;
+  --muted: #9fa3a8;
+  --accent: #5cbf93;
+  --accent-ink: #0f2a1e;
+  --open: #5cbf93;
+  --closed: #d98a7c;
+  --display: Futura, "Futura PT", "Jost", "Century Gothic", "Avenir Next", sans-serif;
+  --body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 10; }
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.wrap { max-width: 1320px; margin: 0 auto; }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--line); margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px))); padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+.logo { font-family: var(--display); font-weight: 500; font-size: 26px; letter-spacing: 0.01em; }
+.top-note { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+.intro { padding-block: 40px 24px; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.intro h1 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4.2vw, 48px); line-height: 1.08; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.intro p { margin: 0; color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; padding-bottom: 72px; }
+.card { display: flex; flex-direction: column; background: var(--surface); border-radius: 14px; overflow: hidden; transition: transform .18s ease, background .18s ease; }
+.card:hover { transform: translateY(-4px); background: var(--surface-2); }
+.card .media { aspect-ratio: 4 / 3; position: relative; }
+.card .body { padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.card h2 { font-family: var(--display); font-weight: 500; font-size: 19px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.loc { color: var(--muted); font-size: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); color: var(--fg); border: 1px solid var(--line); }
+.card:hover .chip { background: var(--bg); }
+.card .foot { margin-top: auto; padding-top: 12px; display: flex; align-items: end; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); }
+.price { font-family: var(--display); font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.price small { display: block; font-family: var(--body); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.avail { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); text-align: right; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--open); }
+.dot.closed { background: var(--closed); }
+.school-logo { position: absolute; right: 12px; bottom: 12px; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; background: var(--surface-2); border: 2px solid var(--bg); z-index: 2; display: grid; place-items: center; font-family: var(--display); font-size: 15px; color: var(--muted); }
+.school-logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #fff; }
+.grade-badge { position: absolute; top: 12px; left: 12px; background: var(--bg); color: var(--fg); font-family: var(--display); font-weight: 500; font-size: 14px; padding: 4px 10px; border-radius: 8px; z-index: 2; }
+.grade-badge b { color: var(--accent); font-weight: 600; }
+
+/* image placeholder and real image share one slot */
+.ph { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
+.ph .ini { font-family: var(--display); font-weight: 500; font-size: clamp(44px, 7vw, 84px); letter-spacing: 0.04em; color: rgba(255,255,255,.14); }
+.ph .slot { position: absolute; left: 14px; bottom: 12px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,.45); }
+.media img.real, .slotbox img.real { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* detail */
+.back { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; padding-block: 22px 14px; }
+.back:hover { color: var(--fg); }
+.hero { position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 21 / 9; min-height: 260px; background: var(--surface); }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(14,15,16,.82), rgba(14,15,16,0) 62%); z-index: 1; }
+.hero .txt { position: absolute; left: clamp(18px, 3vw, 36px); right: clamp(18px, 3vw, 36px); bottom: clamp(18px, 3vw, 32px); z-index: 2; }
+.hero h1 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 5vw, 58px); line-height: 1.05; margin: 0 0 8px; letter-spacing: -0.01em; text-wrap: balance; }
+.hero .sub { color: #d6d5d0; margin-bottom: 14px; }
+.hero .chip { background: rgba(27,28,30,.7); border-color: rgba(255,255,255,.2); backdrop-filter: blur(6px); }
+
+.bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-top: 16px; padding-bottom: 72px; }
+.tile { background: var(--surface); border-radius: 18px; padding: clamp(18px, 2.4vw, 28px); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s6 { grid-column: span 6; } .s8 { grid-column: span 8; } .s12 { grid-column: span 12; }
+.lbl { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.big { font-family: var(--display); font-weight: 500; font-size: clamp(42px, 5.4vw, 76px); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: auto; padding-top: 18px; }
+.big.accent { color: var(--accent); }
+.big.mid { font-size: clamp(30px, 3.6vw, 48px); }
+.note { color: var(--muted); font-size: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: auto; padding-top: 18px; }
+.pair .big { padding-top: 6px; font-size: clamp(36px, 4.4vw, 60px); }
+.stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-top: 14px; }
+.stats .big { font-size: clamp(28px, 3.4vw, 44px); padding-top: 8px; }
+.rows { display: flex; flex-direction: column; margin-top: 10px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.pill { font-size: 12px; font-weight: 500; padding: 3px 11px; border-radius: 999px; background: var(--surface-2); }
+.pill.open { background: rgba(92,191,147,.16); color: var(--open); }
+.pill.closed { background: rgba(217,138,124,.16); color: var(--closed); }
+.pill.yes { background: rgba(92,191,147,.16); color: var(--open); }
+.tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 18px; }
+.tag { font-family: var(--display); font-size: clamp(20px, 2.4vw, 30px); font-weight: 500; padding: 8px 18px; border-radius: 999px; border: 1px solid var(--line); }
+.slotbox { position: relative; padding: 0; overflow: hidden; aspect-ratio: 16 / 10; }
+.cta { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px 24px; }
+.cta h3 { font-family: var(--display); font-weight: 500; font-size: 24px; margin: 0; }
+.btn { font: inherit; font-weight: 700; background: var(--accent); color: var(--accent-ink); border: 0; padding: 12px 22px; border-radius: 999px; cursor: pointer; }
+.btn:hover { filter: brightness(1.08); }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 12px 18px; border-radius: 12px; font-size: 14px; max-width: min(92vw, 460px); z-index: 20; }
+footer { border-top: 1px solid var(--line); padding-block: 22px 30px; color: var(--muted); font-size: 13px; }
+
+@media (max-width: 1100px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) {
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .s3, .s4 { grid-column: span 1; } .s6, .s8, .s12 { grid-column: span 2; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hero { aspect-ratio: 16 / 10; }
+}
+@media (max-width: 720px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .card h2 { font-size: 16px; } .price { font-size: 18px; } }
+@media (max-width: 480px) { .grid { grid-template-columns: minmax(0, 1fr); } .bento { gap: 12px; } .top-note { display: none; } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
+</style>
+
+<header class="top"><div class="wrap">
+  <a class="logo" href="#" aria-label="Educatius, all schools">Educatius</a>
+  <span class="top-note">School Portal</span>
+</div></header>
+<main class="wrap" id="app"></main>
+<div class="wrap"><footer>Educatius School Portal. Sample built from the SCHOOL DATABASE sheet.</footer></div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+/* Each object mirrors one row of the Schools tab. Keys are the sheet headers.
+   Image ids are the Drive file ids; the real site resolves them from the folder named after School ID. */
+var SCHOOLS = [
+  { "School":"Adrian High School","Publish":"YES","State":"Michigan","City":"Adrian",
+    "Availability-Jan 27":"CLOSED","Availability-Aug 27":"OPEN","Three Sem-Jan 2027":"CLOSED","Three Sem-Aug 2027":"CLOSED",
+    "AYP NET":"$18,950","School ID":"adrian-hs","Niche Ranking":"B-","Total Students":"800","HS Students":"800",
+    "Religion":"No Religious","Type":"Public Day School","GENDER":"Coed","Available Age from":"16","Available Age to":"18",
+    "Student:Teacher":"19:1","Accepting Grade":"11,12","Adm-ELTIS 2.0":"675","Adm-IELTS":"4.0","Adm-TOEFL":"4.0","Adm-Duolingo":"65",
+    "Adm-Interview":"YES","Adm-Accept Grad students?":"NO","Adm-Grade Req":"C","1yr Diploma":"YES","ESL Support":"YES",
+    "Founded":"1828","Climate":"Four Seasons","Univ. Accept Rate":"100%","Special Programs":"IB, Dual Enrollment, Collegiate Athletics",
+    "Avg. SAT":"1110","Avg. ACT":"20",
+    "images":{ "main":"1JBlO07hR_Bomls6Q2kNBKsiU9RQ0KLhx", "1":"1bnV07xAp-FYe7KP8RcxvH_svuBgOoTdg", "2":"1m-WPF10d3k1BiJ4qpsWOBY_zGDe_vcoO", "logo":"1QU3H5uxSyngij6K9CAdTQ3PgZHLoeB9w" } },
+  { "School":"Marian Catholic High School","Publish":"YES","State":"Pennsylvania","City":"Tamaqua",
+    "Availability-Jan 27":"OPEN","Availability-Aug 27":"OPEN","Three Sem-Jan 2027":"OPEN","Three Sem-Aug 2027":"CLOSED",
+    "AYP NET":"$18,950","School ID":"marian-catholic-hs","Niche Ranking":"B+","Total Students":"278","HS Students":"278",
+    "Religion":"Catholic","Type":"Private Day School","GENDER":"Coed","Available Age from":"14","Available Age to":"18",
+    "Student:Teacher":"10:1","Accepting Grade":"9,10,11,12,PG","Adm-ELTIS 2.0":"675","Adm-IELTS":"4.0","Adm-TOEFL":"60","Adm-Duolingo":"65",
+    "Adm-Interview":"YES","Adm-Accept Grad students?":"YES","Adm-Grade Req":"C","1yr Diploma":"YES","ESL Support":"YES",
+    "Founded":"1954","Climate":"Cold Winter / Warm Summer","Univ. Accept Rate":"97%","Special Programs":"College-Prep curriculum, AP, Dual Enrollment",
+    "Avg. SAT":"1130","Avg. ACT":"22", "images":{} },
+  { "School":"Morgan Park Academy","Publish":"YES","State":"Illinois","City":"Chicago",
+    "Availability-Jan 27":"OPEN","Availability-Aug 27":"OPEN","Three Sem-Jan 2027":"OPEN","Three Sem-Aug 2027":"OPEN",
+    "AYP NET":"$23,950","School ID":"morgan-park-academy","Niche Ranking":"A+","Total Students":"450","HS Students":"200",
+    "Religion":"No Religious","Type":"Private Day School","GENDER":"Coed","Available Age from":"14","Available Age to":"18",
+    "Student:Teacher":"12:1","Accepting Grade":"9,10,11,12","Adm-ELTIS 2.0":"675","Adm-IELTS":"4.0","Adm-TOEFL":"85","Adm-Duolingo":"100",
+    "Adm-Interview":"YES","Adm-Accept Grad students?":"NO","Adm-Grade Req":"C","1yr Diploma":"NO","ESL Support":"NO",
+    "Founded":"1888","Climate":"Warm","Univ. Accept Rate":"100%","Special Programs":"STEM",
+    "Avg. SAT":"1250","Avg. ACT":"30", "images":{} }
+];
+
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+function has(v) { return v !== undefined && v !== null && String(v).trim() !== ""; }
+function isYes(v) { return String(v).toUpperCase() === "YES"; }
+function initials(name) { return name.split(/\s+/).filter(Boolean).slice(0, 3).map(function (w) { return w[0].toUpperCase(); }).join(""); }
+function gradeParts(g) { var m = String(g).match(/^([A-F])([+-]?)$/); return m ? '<b>' + m[1] + '</b>' + m[2] : esc(g); }
+function gradesText(v) { return String(v).split(",").map(function (x) { return x.trim(); }).join(", "); }
+
+/* A media slot: designed placeholder underneath, real Drive image on top when it loads. */
+function slot(s, key, label, idx) {
+  var hue = 150 + idx * 38;
+  var id = s.images && s.images[key];
+  var img = id ? '<img class="real" alt="" loading="lazy" src="https://drive.google.com/thumbnail?id=' + id + '&sz=w1400" onerror="this.remove()">' : "";
+  var tag = label ? '<span class="slot">' + esc(label) + '</span>' : "";
+  return '<div class="ph" style="background:linear-gradient(135deg,hsl(' + hue + ' 9% 25%),hsl(' + (hue + 20) + ' 10% 15%))"><span class="ini">' + esc(initials(s["School"])) + '</span>' + tag + '</div>' + img;
+}
+
+/* Round logo at the bottom-right of the card photo; initials show until the logo file loads. */
+function logoBadge(s) {
+  var id = s.images && s.images.logo;
+  var img = id ? '<img alt="" loading="lazy" src="https://drive.google.com/thumbnail?id=' + id + '&sz=w200" onerror="this.remove()">' : "";
+  return '<span class="school-logo">' + esc(initials(s["School"]).slice(0, 2)) + img + '</span>';
+}
+
+function availDot(v) { return '<span class="dot' + (String(v).toUpperCase() === "OPEN" ? "" : " closed") + '"></span>'; }
+
+function renderHome() {
+  var list = SCHOOLS.filter(function (s) { return isYes(s["Publish"]); });
+  var cards = list.map(function (s, i) {
+    var chips = [s["Type"], s["GENDER"], has(s["Religion"]) && s["Religion"] !== "No Religious" ? s["Religion"] : ""].filter(has)
+      .map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join("");
+    return '<a class="card" href="#' + s["School ID"] + '">' +
+      '<div class="media">' + (has(s["Niche Ranking"]) ? '<span class="grade-badge">Niche ' + gradeParts(s["Niche Ranking"]) + '</span>' : "") + slot(s, "main", "", i) + logoBadge(s) + '</div>' +
+      '<div class="body"><h2>' + esc(s["School"]) + '</h2>' +
+      '<div class="loc">' + esc(s["City"]) + ', ' + esc(s["State"]) + '</div>' +
+      '<div class="chips">' + chips + '</div>' +
+      '<div class="foot"><div class="price"><small>AYP NET</small>' + esc(s["AYP NET"]) + '</div>' +
+      '<div class="avail"><span>' + availDot(s["Availability-Jan 27"]) + 'Jan 2027</span><span>' + availDot(s["Availability-Aug 27"]) + 'Aug 2027</span></div></div>' +
+      '</div></a>';
+  }).join("");
+  return '<section class="intro"><h1>Find your school in the United States</h1><p>' + list.length + ' schools</p></section><section class="grid">' + cards + '</section>';
+}
+
+function tile(span, label, value, opts) {
+  opts = opts || {};
+  return '<div class="tile ' + span + '"><span class="lbl">' + esc(label) + '</span>' +
+    '<div class="big' + (opts.accent ? " accent" : "") + (opts.mid ? " mid" : "") + '">' + (opts.raw ? value : esc(value)) + '</div>' +
+    (opts.sub ? '<div class="note">' + esc(opts.sub) + '</div>' : "") + '</div>';
+}
+
+function renderDetail(s, idx) {
+  var t = [];
+  var subtitle = [s["City"] + ", " + s["State"], has(s["Founded"]) ? "Founded " + s["Founded"] : ""].filter(has).join("  ·  ");
+  var chips = [s["Type"], s["GENDER"], has(s["Religion"]) ? (s["Religion"] === "No Religious" ? "No religious affiliation" : s["Religion"]) : ""].filter(has)
+    .map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join("");
+
+  if (has(s["Niche Ranking"])) t.push(tile("s3", "Niche grade", gradeParts(s["Niche Ranking"]), { raw: true, accent: true }));
+  if (has(s["Total Students"])) t.push(tile("s3", "Students", s["Total Students"], { sub: has(s["HS Students"]) ? s["HS Students"] + " in high school" : "" }));
+  if (has(s["Student:Teacher"])) t.push(tile("s3", "Student : Teacher", s["Student:Teacher"]));
+  if (has(s["Univ. Accept Rate"])) t.push(tile("s3", "University acceptance", s["Univ. Accept Rate"], { accent: true }));
+
+  if (has(s["AYP NET"])) t.push(tile("s6", "AYP NET", s["AYP NET"]));
+  var av = [["Jan 2027", s["Availability-Jan 27"]], ["Aug 2027", s["Availability-Aug 27"]], ["Three semester, Jan 2027", s["Three Sem-Jan 2027"]], ["Three semester, Aug 2027", s["Three Sem-Aug 2027"]]].filter(function (r) { return has(r[1]); });
+  if (av.length) t.push('<div class="tile s6"><span class="lbl">Availability</span><div class="rows">' + av.map(function (r) {
+    var open = String(r[1]).toUpperCase() === "OPEN";
+    return '<div class="row"><span>' + esc(r[0]) + '</span><span class="pill ' + (open ? "open" : "closed") + '">' + (open ? "Open" : "Closed") + '</span></div>';
+  }).join("") + '</div></div>');
+
+  if (has(s["Avg. SAT"]) || has(s["Avg. ACT"])) {
+    t.push('<div class="tile s4"><span class="lbl">Average test scores</span><div class="pair">' +
+      (has(s["Avg. SAT"]) ? '<div><span class="note">SAT</span><div class="big">' + esc(s["Avg. SAT"]) + '</div></div>' : "") +
+      (has(s["Avg. ACT"]) ? '<div><span class="note">ACT</span><div class="big">' + esc(s["Avg. ACT"]) + '</div></div>' : "") + '</div></div>');
+  }
+  if (has(s["Available Age from"])) t.push(tile("s4", "Age range", s["Available Age from"] + "-" + s["Available Age to"], { sub: has(s["Accepting Grade"]) ? "Grades " + gradesText(s["Accepting Grade"]) : "" }));
+  if (has(s["Climate"])) t.push(tile("s4", "Climate", s["Climate"], { mid: true }));
+
+  if (has(s["Special Programs"])) {
+    t.push('<div class="tile s6"><span class="lbl">Special programs</span><div class="tags">' + s["Special Programs"].split(",").map(function (p) { return '<span class="tag">' + esc(p.trim()) + '</span>'; }).join("") + '</div></div>');
+  }
+  var sup = [["ESL support", s["ESL Support"]], ["1-year diploma", s["1yr Diploma"]], ["Interview required", s["Adm-Interview"]], ["Graduate students accepted", s["Adm-Accept Grad students?"]]].filter(function (r) { return has(r[1]); });
+  if (sup.length) t.push('<div class="tile s6"><span class="lbl">Support and admission</span><div class="rows">' + sup.map(function (r) {
+    return '<div class="row"><span>' + esc(r[0]) + '</span><span class="pill ' + (isYes(r[1]) ? "yes" : "") + '">' + (isYes(r[1]) ? "Yes" : "No") + '</span></div>';
+  }).join("") + '</div></div>');
+
+  var req = [["Duolingo", s["Adm-Duolingo"]], ["IELTS", s["Adm-IELTS"]], ["TOEFL", s["Adm-TOEFL"]], ["ELTiS", s["Adm-ELTIS 2.0"]], ["Min. grade", s["Adm-Grade Req"]]].filter(function (r) { return has(r[1]); });
+  if (req.length) t.push('<div class="tile s12"><span class="lbl">English and academic requirements</span><div class="stats">' + req.map(function (r) {
+    return '<div><span class="note">' + esc(r[0]) + '</span><div class="big">' + esc(r[1]) + '</div></div>';
+  }).join("") + '</div></div>');
+
+  t.push('<div class="tile s6 slotbox">' + slot(s, "1", "Image 1", idx + 1) + '</div>');
+  t.push('<div class="tile s6 slotbox">' + slot(s, "2", "Image 2", idx + 2) + '</div>');
+
+  t.push('<div class="tile s12 cta"><h3>' + esc(s["School"]) + ' profile</h3><button class="btn" id="pdfBtn" type="button">Download PDF</button></div>');
+
+  return '<a class="back" href="#">&larr; All schools</a>' +
+    '<section class="hero">' + slot(s, "main", "Main image", idx) + '<div class="txt"><h1>' + esc(s["School"]) + '</h1><div class="sub">' + esc(subtitle) + '</div><div class="chips">' + chips + '</div></div></section>' +
+    '<section class="bento">' + t.join("") + '</section>';
+}
+
+var toastTimer;
+function toast(msg) {
+  var el = document.getElementById("toast");
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.hidden = true; }, 3600);
+}
+
+function render() {
+  var id = location.hash.replace("#", "");
+  var app = document.getElementById("app");
+  var idx = -1;
+  SCHOOLS.forEach(function (s, i) { if (s["School ID"] === id && isYes(s["Publish"])) idx = i; });
+  if (idx >= 0) {
+    app.innerHTML = renderDetail(SCHOOLS[idx], idx);
+    document.title = SCHOOLS[idx]["School"] + " | Educatius";
+    var b = document.getElementById("pdfBtn");
+    if (b) b.addEventListener("click", function () { toast("PDF download is built into the live site. Downloads are disabled in this preview."); });
+  } else {
+    app.innerHTML = renderHome();
+    document.title = "Educatius School Portal";
+  }
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", render);
+render();
+</script>
+
+</body>
+</html>
