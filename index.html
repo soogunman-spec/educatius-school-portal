@@ -68,6 +68,10 @@ header.top .wrap { display: flex; align-items: center; justify-content: space-be
 .media img.real, .slotbox img.real, .hero img.real { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 /* detail */
+.mapbox { height: 380px; border-radius: 12px; overflow: hidden; background: var(--surface-2); margin-top: 10px; }
+.mapbox iframe { display: block; width: 100%; height: 100%; border: 0; }
+.mapbox iframe.gray { filter: grayscale(1) contrast(1.05) brightness(.96); }
+@media (max-width: 720px) { .mapbox { height: 300px; } }
 .state { color: var(--muted); padding-block: 80px; text-align: center; }
 .back { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; padding-block: 22px 14px; }
 .back:hover { color: var(--fg); }
@@ -261,7 +265,7 @@ function availBlock(s) {
   return '<div class="avail"><span>' + availDot(s["Availability-Jan 27"]) + 'Jan 2027</span><span>' + availDot(s["Availability-Aug 27"]) + 'Aug 2027</span></div>';
 }
 function priceBlock(s) {
-  return '<div class="price"><small>AYP NET</small>' + esc(shownPrice(s)) + '</div>';
+  return '<div class="price"><small>Tuition</small>' + esc(shownPrice(s)) + '</div>';
 }
 
 function renderHome() {
@@ -328,7 +332,7 @@ function renderDetail(s, idx) {
   if (has(s["Student:Teacher"])) t.push(tile("s3", "Student : Teacher", s["Student:Teacher"]));
   if (has(s["Univ. Accept Rate"])) t.push(tile("s3", "University acceptance", s["Univ. Accept Rate"], { accent: true }));
 
-  if (has(s["AYP NET"])) t.push(tile("s6", "AYP NET", shownPrice(s)));
+  if (has(s["AYP NET"])) t.push(tile("s6", "Tuition", shownPrice(s)));
   var av = [["Jan 2027", s["Availability-Jan 27"]], ["Aug 2027", s["Availability-Aug 27"]], ["Three semester, Jan 2027", s["Three Sem-Jan 2027"]], ["Three semester, Aug 2027", s["Three Sem-Aug 2027"]]].filter(function (r) { return has(r[1]); });
   if (av.length) t.push('<div class="tile s6"><span class="lbl">Availability</span><div class="rows">' + av.map(function (r) {
     var open = String(r[1]).toUpperCase() === "OPEN";
@@ -359,11 +363,82 @@ function renderDetail(s, idx) {
   t.push('<div class="tile s6 slotbox">' + slot(s, "1", "Image 1", idx + 1) + '</div>');
   t.push('<div class="tile s6 slotbox">' + slot(s, "2", "Image 2", idx + 2) + '</div>');
 
+  t.push('<div class="tile s12"><span class="lbl">Location</span><div class="mapbox" id="map"></div><div class="note">' + esc([s["City"], s["State"]].filter(has).join(", ")) + '</div></div>');
+
   t.push('<div class="tile s12 cta"><h3>' + esc(s["School"]) + ' profile</h3><button class="btn" id="pdfBtn" type="button">Download PDF</button></div>');
 
   return '<a class="back" href="#">&larr; All schools</a>' +
     '<section class="hero">' + slot(s, "main", "Main image", idx) + '<div class="txt"><h1>' + esc(s["School"]) + '</h1><div class="sub">' + esc(subtitle) + '</div><div class="chips">' + chips + '</div></div></section>' +
     '<section class="bento">' + t.join("") + '</section>';
+}
+
+/* ---------- Map: monotone Google Map (needs GOOGLE_MAPS_KEY in config.js), plain embed as fallback ---------- */
+var MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#e3e3e3" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#5b5b5b" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#f2f2f2" }] },
+  { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "off" }] },
+  { featureType: "landscape.man_made", elementType: "geometry", stylers: [{ color: "#d6d6d6" }] },
+  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#cfcfcf" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#c2c2c2" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#4a4847" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#b5b5b5" }] }
+];
+var MAPS_PROMISE = null;
+var MAP_AUTH_FAILED = false;
+window.gm_authFailure = function () { MAP_AUTH_FAILED = true; var el = document.getElementById("map"); if (el) fallbackMap(el, window.__mapSchool); };
+
+function loadMaps(key) {
+  if (window.google && window.google.maps && window.google.maps.Map) return Promise.resolve();
+  if (MAPS_PROMISE) return MAPS_PROMISE;
+  MAPS_PROMISE = new Promise(function (resolve, reject) {
+    window.__mapsReady = resolve;
+    var sc = document.createElement("script");
+    sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&callback=__mapsReady";
+    sc.async = true; sc.onerror = reject;
+    document.head.appendChild(sc);
+  });
+  return MAPS_PROMISE;
+}
+
+function mapQuery(s) { return [s["School"], s["City"], s["State"]].filter(has).join(", "); }
+
+/* Plain Google embed (no key). Turned gray with CSS so it still matches the site. */
+function fallbackMap(el, s) {
+  el.innerHTML = '<iframe class="gray" title="Map of ' + esc(s["School"]) + '" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=' + encodeURIComponent(mapQuery(s)) + '&z=14&output=embed"></iframe>';
+}
+
+function initMap(s) {
+  var el = document.getElementById("map");
+  if (!el) return;
+  window.__mapSchool = s;
+  var key = window.PORTAL_CONFIG && window.PORTAL_CONFIG.GOOGLE_MAPS_KEY;
+  if (!key || MAP_AUTH_FAILED) { fallbackMap(el, s); return; }
+  loadMaps(key).then(function () {
+    if (!el.isConnected) return;
+    function show(pos) {
+      var map = new google.maps.Map(el, {
+        center: pos, zoom: 14, styles: MAP_STYLE, disableDefaultUI: true, zoomControl: true,
+        gestureHandling: "cooperative", clickableIcons: false
+      });
+      new google.maps.Marker({ position: pos, map: map, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#5cbf93", fillOpacity: 1, strokeColor: "#1b1c1e", strokeWeight: 3 } });
+    }
+    var lat = parseFloat(s["Latitude"]), lng = parseFloat(s["Longitude"]);
+    if (!isNaN(lat) && !isNaN(lng)) { show({ lat: lat, lng: lng }); return; }
+    var geo = new google.maps.Geocoder();
+    geo.geocode({ address: mapQuery(s) }, function (res, status) {
+      if (!el.isConnected) return;
+      if (status === "OK" && res[0]) { show(res[0].geometry.location); return; }
+      geo.geocode({ address: [s["City"], s["State"]].filter(has).join(", ") }, function (r2, st2) {
+        if (!el.isConnected) return;
+        if (st2 === "OK" && r2[0]) show(r2[0].geometry.location); else fallbackMap(el, s);
+      });
+    });
+  }).catch(function () { if (el.isConnected) fallbackMap(el, s); });
 }
 
 var toastTimer;
@@ -384,6 +459,7 @@ function render() {
   if (STATE === "error") { app.innerHTML = '<p class="state">Could not load the school data. Please reload the page.</p>'; return; }
   if (idx >= 0) {
     app.innerHTML = renderDetail(SCHOOLS[idx], idx);
+    initMap(SCHOOLS[idx]);
     document.title = SCHOOLS[idx]["School"] + " | Educatius";
     var b = document.getElementById("pdfBtn");
     if (b) b.addEventListener("click", function () { toast("PDF download is built into the live site. Downloads are disabled in this preview."); });
