@@ -140,11 +140,29 @@ function initials(name) { return name.split(/\s+/).filter(Boolean).slice(0, 3).m
 function gradeParts(g) { var m = String(g).match(/^([A-F])([+-]?)$/); return m ? '<b>' + m[1] + '</b>' + m[2] : esc(g); }
 function gradesText(v) { return String(v).split(",").map(function (x) { return x.trim(); }).join(", "); }
 
+/* Drive image with fallbacks: tries three Google image URLs in order, removes itself if all fail. */
+function driveSrc(id, step, w) {
+  return [
+    "https://lh3.googleusercontent.com/d/" + id + "=w" + w,
+    "https://drive.google.com/thumbnail?id=" + id + "&sz=w" + w,
+    "https://drive.google.com/uc?export=view&id=" + id
+  ][step];
+}
+function driveImg(id, w, cls) {
+  return '<img class="' + cls + '" alt="" referrerpolicy="no-referrer" data-id="' + id + '" data-w="' + w + '" data-step="0" src="' + driveSrc(id, 0, w) + '" onerror="imgFallback(this)">';
+}
+function imgFallback(el) {
+  var n = Number(el.getAttribute("data-step")) + 1;
+  if (n > 2) { el.remove(); return; }
+  el.setAttribute("data-step", n);
+  el.src = driveSrc(el.getAttribute("data-id"), n, el.getAttribute("data-w"));
+}
+
 /* A media slot: designed placeholder underneath, real Drive image on top when it loads. */
 function slot(s, key, label, idx) {
   var hue = 150 + idx * 38;
   var id = s.images && s.images[key];
-  var img = id ? '<img class="real" alt="" loading="lazy" src="https://drive.google.com/thumbnail?id=' + id + '&sz=w1400" onerror="this.remove()">' : "";
+  var img = id ? driveImg(id, 1400, "real") : "";
   var tag = label ? '<span class="slot">' + esc(label) + '</span>' : "";
   return '<div class="ph" style="background:linear-gradient(135deg,hsl(' + hue + ' 9% 25%),hsl(' + (hue + 20) + ' 10% 15%))"><span class="ini">' + esc(initials(s["School"])) + '</span>' + tag + '</div>' + img;
 }
@@ -152,7 +170,7 @@ function slot(s, key, label, idx) {
 /* Round logo at the bottom-right of the card photo; initials show until the logo file loads. */
 function logoBadge(s) {
   var id = s.images && s.images.logo;
-  var img = id ? '<img alt="" loading="lazy" src="https://drive.google.com/thumbnail?id=' + id + '&sz=w200" onerror="this.remove()">' : "";
+  var img = id ? driveImg(id, 200, "") : "";
   return '<span class="school-logo">' + esc(initials(s["School"]).slice(0, 2)) + img + '</span>';
 }
 
