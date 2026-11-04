@@ -68,6 +68,7 @@ header.top .wrap { display: flex; align-items: center; justify-content: space-be
 .media img.real, .slotbox img.real { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 /* detail */
+.state { color: var(--muted); padding-block: 80px; text-align: center; }
 .back { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; padding-block: 22px 14px; }
 .back:hover { color: var(--fg); }
 .hero { position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 21 / 9; min-height: 260px; background: var(--surface); }
@@ -123,41 +124,16 @@ footer { border-top: 1px solid var(--line); padding-block: 22px 30px; color: var
   <span class="top-note">School Portal</span>
 </div></header>
 <main class="wrap" id="app"></main>
-<div class="wrap"><footer>Educatius School Portal. Sample built from the SCHOOL DATABASE sheet.</footer></div>
+<div class="wrap"><footer>Educatius School Portal</footer></div>
 <div id="toast" class="toast" role="status" hidden></div>
 
+<script src="config.js"></script>
 <script>
-/* Each object mirrors one row of the Schools tab. Keys are the sheet headers.
-   Image ids are the Drive file ids; the real site resolves them from the folder named after School ID. */
-var SCHOOLS = [
-  { "School":"Adrian High School","Publish":"YES","State":"Michigan","City":"Adrian",
-    "Availability-Jan 27":"CLOSED","Availability-Aug 27":"OPEN","Three Sem-Jan 2027":"CLOSED","Three Sem-Aug 2027":"CLOSED",
-    "AYP NET":"$18,950","School ID":"adrian-hs","Niche Ranking":"B-","Total Students":"800","HS Students":"800",
-    "Religion":"No Religious","Type":"Public Day School","GENDER":"Coed","Available Age from":"16","Available Age to":"18",
-    "Student:Teacher":"19:1","Accepting Grade":"11,12","Adm-ELTIS 2.0":"675","Adm-IELTS":"4.0","Adm-TOEFL":"4.0","Adm-Duolingo":"65",
-    "Adm-Interview":"YES","Adm-Accept Grad students?":"NO","Adm-Grade Req":"C","1yr Diploma":"YES","ESL Support":"YES",
-    "Founded":"1828","Climate":"Four Seasons","Univ. Accept Rate":"100%","Special Programs":"IB, Dual Enrollment, Collegiate Athletics",
-    "Avg. SAT":"1110","Avg. ACT":"20",
-    "images":{ "main":"1JBlO07hR_Bomls6Q2kNBKsiU9RQ0KLhx", "1":"1bnV07xAp-FYe7KP8RcxvH_svuBgOoTdg", "2":"1m-WPF10d3k1BiJ4qpsWOBY_zGDe_vcoO", "logo":"1QU3H5uxSyngij6K9CAdTQ3PgZHLoeB9w" } },
-  { "School":"Marian Catholic High School","Publish":"YES","State":"Pennsylvania","City":"Tamaqua",
-    "Availability-Jan 27":"OPEN","Availability-Aug 27":"OPEN","Three Sem-Jan 2027":"OPEN","Three Sem-Aug 2027":"CLOSED",
-    "AYP NET":"$18,950","School ID":"marian-catholic-hs","Niche Ranking":"B+","Total Students":"278","HS Students":"278",
-    "Religion":"Catholic","Type":"Private Day School","GENDER":"Coed","Available Age from":"14","Available Age to":"18",
-    "Student:Teacher":"10:1","Accepting Grade":"9,10,11,12,PG","Adm-ELTIS 2.0":"675","Adm-IELTS":"4.0","Adm-TOEFL":"60","Adm-Duolingo":"65",
-    "Adm-Interview":"YES","Adm-Accept Grad students?":"YES","Adm-Grade Req":"C","1yr Diploma":"YES","ESL Support":"YES",
-    "Founded":"1954","Climate":"Cold Winter / Warm Summer","Univ. Accept Rate":"97%","Special Programs":"College-Prep curriculum, AP, Dual Enrollment",
-    "Avg. SAT":"1130","Avg. ACT":"22", "images":{} },
-  { "School":"Morgan Park Academy","Publish":"YES","State":"Illinois","City":"Chicago",
-    "Availability-Jan 27":"OPEN","Availability-Aug 27":"OPEN","Three Sem-Jan 2027":"OPEN","Three Sem-Aug 2027":"OPEN",
-    "AYP NET":"$23,950","School ID":"morgan-park-academy","Niche Ranking":"A+","Total Students":"450","HS Students":"200",
-    "Religion":"No Religious","Type":"Private Day School","GENDER":"Coed","Available Age from":"14","Available Age to":"18",
-    "Student:Teacher":"12:1","Accepting Grade":"9,10,11,12","Adm-ELTIS 2.0":"675","Adm-IELTS":"4.0","Adm-TOEFL":"85","Adm-Duolingo":"100",
-    "Adm-Interview":"YES","Adm-Accept Grad students?":"NO","Adm-Grade Req":"C","1yr Diploma":"NO","ESL Support":"NO",
-    "Founded":"1888","Climate":"Warm","Univ. Accept Rate":"100%","Special Programs":"STEM",
-    "Avg. SAT":"1250","Avg. ACT":"30", "images":{} }
-];
+var SCHOOLS = [];
+var STATE = "loading";
 
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+function money(v) { return String(v).replace(/\.00$/, ""); }
 function has(v) { return v !== undefined && v !== null && String(v).trim() !== ""; }
 function isYes(v) { return String(v).toUpperCase() === "YES"; }
 function initials(name) { return name.split(/\s+/).filter(Boolean).slice(0, 3).map(function (w) { return w[0].toUpperCase(); }).join(""); }
@@ -192,7 +168,7 @@ function renderHome() {
       '<div class="body"><h2>' + esc(s["School"]) + '</h2>' +
       '<div class="loc">' + esc(s["City"]) + ', ' + esc(s["State"]) + '</div>' +
       '<div class="chips">' + chips + '</div>' +
-      '<div class="foot"><div class="price"><small>AYP NET</small>' + esc(s["AYP NET"]) + '</div>' +
+      '<div class="foot"><div class="price"><small>AYP NET</small>' + esc(money(s["AYP NET"])) + '</div>' +
       '<div class="avail"><span>' + availDot(s["Availability-Jan 27"]) + 'Jan 2027</span><span>' + availDot(s["Availability-Aug 27"]) + 'Aug 2027</span></div></div>' +
       '</div></a>';
   }).join("");
@@ -217,7 +193,7 @@ function renderDetail(s, idx) {
   if (has(s["Student:Teacher"])) t.push(tile("s3", "Student : Teacher", s["Student:Teacher"]));
   if (has(s["Univ. Accept Rate"])) t.push(tile("s3", "University acceptance", s["Univ. Accept Rate"], { accent: true }));
 
-  if (has(s["AYP NET"])) t.push(tile("s6", "AYP NET", s["AYP NET"]));
+  if (has(s["AYP NET"])) t.push(tile("s6", "AYP NET", money(s["AYP NET"])));
   var av = [["Jan 2027", s["Availability-Jan 27"]], ["Aug 2027", s["Availability-Aug 27"]], ["Three semester, Jan 2027", s["Three Sem-Jan 2027"]], ["Three semester, Aug 2027", s["Three Sem-Aug 2027"]]].filter(function (r) { return has(r[1]); });
   if (av.length) t.push('<div class="tile s6"><span class="lbl">Availability</span><div class="rows">' + av.map(function (r) {
     var open = String(r[1]).toUpperCase() === "OPEN";
@@ -268,6 +244,9 @@ function render() {
   var app = document.getElementById("app");
   var idx = -1;
   SCHOOLS.forEach(function (s, i) { if (s["School ID"] === id && isYes(s["Publish"])) idx = i; });
+  if (STATE === "loading") { app.innerHTML = '<p class="state">Loading schools...</p>'; return; }
+  if (STATE === "nourl") { app.innerHTML = '<p class="state">Set API_URL in config.js to connect the school database.</p>'; return; }
+  if (STATE === "error") { app.innerHTML = '<p class="state">Could not load the school data. Please reload the page.</p>'; return; }
   if (idx >= 0) {
     app.innerHTML = renderDetail(SCHOOLS[idx], idx);
     document.title = SCHOOLS[idx]["School"] + " | Educatius";
@@ -281,6 +260,14 @@ function render() {
 }
 window.addEventListener("hashchange", render);
 render();
+
+(function load() {
+  var url = window.PORTAL_CONFIG && window.PORTAL_CONFIG.API_URL;
+  if (!url) { STATE = "nourl"; render(); return; }
+  fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+    SCHOOLS = d.schools || []; STATE = "ready"; render();
+  }).catch(function () { STATE = "error"; render(); });
+})();
 </script>
 
 </body>
