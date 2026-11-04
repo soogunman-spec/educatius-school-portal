@@ -118,24 +118,32 @@ footer { border-top: 1px solid var(--line); padding-block: 22px 30px; color: var
 .view-toggle button { border: 0; background: transparent; color: var(--muted); width: 42px; height: 34px; border-radius: 999px; cursor: pointer; display: grid; place-items: center; }
 .view-toggle button:hover { color: var(--fg); }
 .view-toggle button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
-.list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 72px; }
-.lrow { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; align-items: center; gap: 24px; background: var(--surface); border-radius: 14px; padding: 12px 24px 12px 12px; transition: background .18s ease; }
+.list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 72px; }
+.lhead, .lrow { display: grid; grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.6fr) 64px 88px 108px; align-items: center; column-gap: 16px; }
+.lhead { padding: 0 16px 6px 12px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.lrow { background: var(--surface); border-radius: 12px; padding: 8px 16px 8px 12px; min-height: 58px; transition: background .18s ease; }
 .lrow:hover { background: var(--surface-2); }
-.lrow .media { aspect-ratio: 4 / 3; position: relative; border-radius: 10px; overflow: hidden; }
-.lrow .school-logo { width: 38px; height: 38px; right: 8px; bottom: 8px; font-size: 12px; }
-.lrow .grade-badge { top: 8px; left: 8px; font-size: 12px; padding: 3px 8px; }
-.linfo { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.linfo h2 { font-family: var(--display); font-weight: 500; font-size: 22px; line-height: 1.2; margin: 0; text-wrap: balance; }
 .lrow:hover .chip { background: var(--bg); }
-.lright { display: flex; align-items: center; gap: 32px; }
-@media (max-width: 720px) {
-  .intro-r { width: 100%; gap: 12px; }
-  .intro-r p { width: 100%; }
-  .sort-sel { flex: 1; min-width: 0; }
-  .lrow { grid-template-columns: 112px minmax(0, 1fr); gap: 14px; padding: 10px; }
-  .linfo h2 { font-size: 17px; }
-  .lright { grid-column: 1 / -1; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--line); }
-  .lrow .school-logo { width: 28px; height: 28px; font-size: 10px; }
+.llogo { position: relative; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--display); font-size: 13px; color: var(--muted); }
+.llogo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #fff; }
+.l-name { min-width: 0; }
+.l-name h2 { font-family: var(--display); font-weight: 500; font-size: 17px; line-height: 1.25; margin: 0; overflow-wrap: anywhere; }
+.l-locm { display: none; color: var(--muted); font-size: 13px; }
+.l-loc { color: var(--muted); font-size: 14px; }
+.l-chips .chip { font-size: 12px; padding: 2px 9px; }
+.l-grade { font-family: var(--display); font-size: 17px; }
+.l-grade b { color: var(--accent); font-weight: 600; }
+.l-price { font-family: var(--display); font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.lrow .avail { text-align: left; gap: 1px; white-space: nowrap; }
+@media (max-width: 900px) {
+  .lhead { display: none; }
+  .lrow { grid-template-columns: 44px minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; padding: 8px 12px; }
+  .llogo { grid-row: 1 / 3; }
+  .l-loc, .l-chips, .l-grade { display: none; }
+  .l-locm { display: block; }
+  .l-price { grid-column: 3; grid-row: 1; text-align: right; font-size: 16px; }
+  .lrow .avail { grid-column: 3; grid-row: 2; flex-direction: row; gap: 10px; font-size: 11px; }
+  .l-name { grid-column: 2; grid-row: 1 / 3; }
 }
 @media (max-width: 1100px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) {
@@ -208,10 +216,10 @@ function slot(s, key, label, idx) {
 }
 
 /* Round logo at the bottom-right of the card photo; initials show until the logo file loads. */
-function logoBadge(s) {
+function logoBadge(s, cls) {
   var id = s.images && s.images.logo;
   var img = id ? driveImg(id, 200, "") : "";
-  return '<span class="school-logo">' + esc(initials(s["School"]).slice(0, 2)) + img + '</span>';
+  return '<span class="' + (cls || "school-logo") + '">' + esc(initials(s["School"]).slice(0, 2)) + img + '</span>';
 }
 
 function availDot(v) { return '<span class="dot' + (String(v).toUpperCase() === "OPEN" ? "" : " closed") + '"></span>'; }
@@ -272,11 +280,17 @@ function renderHome() {
   var list = sortList(SCHOOLS.filter(function (s) { return isYes(s["Publish"]); }));
   var body;
   if (VIEW === "list") {
-    body = '<section class="list">' + list.map(function (s, i) {
-      return '<a class="lrow" href="#' + s["School ID"] + '">' + mediaBlock(s, i) +
-        '<div class="linfo"><h2>' + esc(s["School"]) + '</h2><div class="loc">' + esc(s["City"]) + ', ' + esc(s["State"]) + '</div><div class="chips">' + schoolChips(s) + '</div></div>' +
-        '<div class="lright">' + priceBlock(s) + availBlock(s) + '</div></a>';
-    }).join("") + '</section>';
+    var loc = function (s) { return esc([s["City"], s["State"]].filter(has).join(", ")); };
+    body = '<section class="list"><div class="lhead" aria-hidden="true"><span></span><span>School</span><span>Location</span><span>Type</span><span>Niche</span><span>Tuition</span><span>Season</span></div>' +
+      list.map(function (s) {
+        return '<a class="lrow" href="#' + s["School ID"] + '">' + logoBadge(s, "llogo") +
+          '<div class="l-name"><h2>' + esc(s["School"]) + '</h2><span class="l-locm">' + loc(s) + '</span></div>' +
+          '<span class="l-loc">' + loc(s) + '</span>' +
+          '<div class="chips l-chips">' + schoolChips(s) + '</div>' +
+          '<span class="l-grade">' + (has(s["Niche Ranking"]) ? gradeParts(s["Niche Ranking"]) : "") + '</span>' +
+          '<span class="l-price">' + esc(shownPrice(s)) + '</span>' +
+          availBlock(s) + '</a>';
+      }).join("") + '</section>';
   } else {
     body = '<section class="grid">' + list.map(function (s, i) {
       return '<a class="card" href="#' + s["School ID"] + '">' + mediaBlock(s, i) +
