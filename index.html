@@ -160,6 +160,16 @@ var STATE = "loading";
 
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
 function money(v) { return String(v).replace(/\.00$/, ""); }
+var COUNTRY = null;
+/* Price markup added to the sheet's AYP NET. Change here, or override with MARKUP: { KR: 5000, DEFAULT: 3000 } in config.js. */
+function markupFor() {
+  var m = (window.PORTAL_CONFIG && window.PORTAL_CONFIG.MARKUP) || {};
+  var kr = typeof m.KR === "number" ? m.KR : 5000;
+  var other = typeof m.DEFAULT === "number" ? m.DEFAULT : 3000;
+  return COUNTRY === "KR" ? kr : other;
+}
+function baseNum(s) { var n = parseFloat(String(s["AYP NET"] || "").replace(/[^0-9.]/g, "")); return isNaN(n) ? null : n; }
+function shownPrice(s) { var n = baseNum(s); return n === null ? "" : "$" + (n + markupFor()).toLocaleString("en-US"); }
 function has(v) { return v !== undefined && v !== null && String(v).trim() !== ""; }
 function isYes(v) { return String(v).toUpperCase() === "YES"; }
 function initials(name) { return name.split(/\s+/).filter(Boolean).slice(0, 3).map(function (w) { return w[0].toUpperCase(); }).join(""); }
@@ -251,7 +261,7 @@ function availBlock(s) {
   return '<div class="avail"><span>' + availDot(s["Availability-Jan 27"]) + 'Jan 2027</span><span>' + availDot(s["Availability-Aug 27"]) + 'Aug 2027</span></div>';
 }
 function priceBlock(s) {
-  return '<div class="price"><small>AYP NET</small>' + esc(money(s["AYP NET"])) + '</div>';
+  return '<div class="price"><small>AYP NET</small>' + esc(shownPrice(s)) + '</div>';
 }
 
 function renderHome() {
@@ -318,7 +328,7 @@ function renderDetail(s, idx) {
   if (has(s["Student:Teacher"])) t.push(tile("s3", "Student : Teacher", s["Student:Teacher"]));
   if (has(s["Univ. Accept Rate"])) t.push(tile("s3", "University acceptance", s["Univ. Accept Rate"], { accent: true }));
 
-  if (has(s["AYP NET"])) t.push(tile("s6", "AYP NET", money(s["AYP NET"])));
+  if (has(s["AYP NET"])) t.push(tile("s6", "AYP NET", shownPrice(s)));
   var av = [["Jan 2027", s["Availability-Jan 27"]], ["Aug 2027", s["Availability-Aug 27"]], ["Three semester, Jan 2027", s["Three Sem-Jan 2027"]], ["Three semester, Aug 2027", s["Three Sem-Aug 2027"]]].filter(function (r) { return has(r[1]); });
   if (av.length) t.push('<div class="tile s6"><span class="lbl">Availability</span><div class="rows">' + av.map(function (r) {
     var open = String(r[1]).toUpperCase() === "OPEN";
@@ -390,8 +400,13 @@ render();
 (function load() {
   var url = window.PORTAL_CONFIG && window.PORTAL_CONFIG.API_URL;
   if (!url) { STATE = "nourl"; render(); return; }
+  /* visitor country from the Vercel function; falls back to null (non-KR price) if it fails or is slow */
+  var countryP = Promise.race([
+    fetch("/api/country").then(function (r) { return r.json(); }).then(function (d) { return d.country || null; }),
+    new Promise(function (res) { setTimeout(function () { res(null); }, 4000); })
+  ]).catch(function () { return null; });
   fetch(url).then(function (r) { return r.json(); }).then(function (d) {
-    SCHOOLS = d.schools || []; STATE = "ready"; render();
+    return countryP.then(function (c) { COUNTRY = c; SCHOOLS = d.schools || []; STATE = "ready"; render(); });
   }).catch(function () { STATE = "error"; render(); });
 })();
 </script>
